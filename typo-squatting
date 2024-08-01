@@ -1,0 +1,30 @@
+
+$originalIp = Read-Host "Enter the IP address of the legitimate website (e.g., 172.217.19.196)"
+
+$fakeDomainsFile = Read-Host "Enter the path to the text file containing the list of fake domains"
+
+if (-Not (Test-Path $fakeDomainsFile)) {
+    Write-Host "The specified file does not exist. Please check the path and try again."
+    exit
+}
+
+$hostsFile = "$env:SystemRoot\System32\drivers\etc\hosts"
+
+$fakeDomains = Get-Content -Path $fakeDomainsFile
+
+try {
+    foreach ($domain in $fakeDomains) {
+        $entry = "$originalIp $domain"
+        
+        $existingEntries = Get-Content $hostsFile | Where-Object { $_ -match "\b$domain\b" }
+        
+        if ($existingEntries) {
+            Write-Host "The domain '$domain' already exists in the hosts file. Skipping..."
+        } else {
+            Add-Content -Path $hostsFile -Value $entry
+            Write-Host "Added entry: $entry"
+        }
+    }
+} catch {
+    Write-Host "An error occurred while modifying the hosts file: $_"
+}
